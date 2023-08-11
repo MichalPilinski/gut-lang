@@ -9,7 +9,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class Gut {
+    private static final Interpreter interpreter = new Interpreter();
+
     private static boolean hadError;
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
 
@@ -34,6 +37,7 @@ public class Gut {
         run(new String(fileBytes, Charset.defaultCharset()));
 
         if(hadError) System.exit(65);
+        if(hadRuntimeError) System.exit(70);
     }
 
     private static void runPrompt() throws IOException {
@@ -61,11 +65,17 @@ public class Gut {
         // Stop if there was a syntax error.
         if (hadError) return;
 
-        System.out.println(new AstPrinter().print(expression));
+        interpreter.interpret(expression);
     }
 
     static void error(int line, String message) {
         report(line, "", message);
+    }
+
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() +
+                "\n[line " + error.token.lineNumber + "]");
+        hadRuntimeError = true;
     }
 
     static void error(Token token, String message) {
