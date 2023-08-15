@@ -1,4 +1,8 @@
-package mpilinski.gut;
+package mpilinski.gut.classes;
+
+import mpilinski.gut.Gut;
+import mpilinski.gut.models.Token;
+import mpilinski.gut.models.TokenType;
 
 import java.util.*;
 
@@ -169,7 +173,6 @@ public class Scanner {
         addToken(type);
         return true;
     }
-
 
     private boolean isAtEnd() {
         return currentIndex >= source.length();

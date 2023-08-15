@@ -1,7 +1,16 @@
-package mpilinski.gut;
+package mpilinski.gut.classes;
 
-public class Interpreter implements Expr.Visitor<Object> {
-    void interpret(Expr expression) {
+import mpilinski.gut.Gut;
+import mpilinski.gut.abstractions.AbstractExpression;
+import mpilinski.gut.errors.RuntimeError;
+import mpilinski.gut.expressions.BinaryExpression;
+import mpilinski.gut.expressions.GroupingExpression;
+import mpilinski.gut.expressions.LiteralExpression;
+import mpilinski.gut.expressions.UnaryExpression;
+import mpilinski.gut.models.Token;
+
+public class Interpreter implements AbstractExpression.Visitor<Object> {
+    public void interpret(AbstractExpression expression) {
         try {
             Object value = evaluate(expression);
             System.out.println(stringify(value));
@@ -15,9 +24,11 @@ public class Interpreter implements Expr.Visitor<Object> {
 
         if (object instanceof Double) {
             String text = object.toString();
+
             if (text.endsWith(".0")) {
                 text = text.substring(0, text.length() - 2);
             }
+
             return text;
         }
 
@@ -25,22 +36,22 @@ public class Interpreter implements Expr.Visitor<Object> {
     }
 
     @Override
-    public Object visitLiteralExpr(Expr.Literal expr) {
-        return expr.value;
+    public Object visitLiteralExpression(LiteralExpression expression) {
+        return expression.value;
     }
 
     @Override
-    public Object visitGroupingExpr(Expr.Grouping expr) {
-        return evaluate(expr.expression);
+    public Object visitGroupingExpression(GroupingExpression expression) {
+        return evaluate(expression.expression);
     }
     
     @Override
-    public Object visitUnaryExpr(Expr.Unary expr) {
-        Object right = evaluate(expr.right);
+    public Object visitUnaryExpression(UnaryExpression expression) {
+        Object right = evaluate(expression.right);
 
-        switch (expr.operator.type) {
+        switch (expression.operator.type) {
             case MINUS:
-                checkNumberOperand(expr.operator, right);
+                checkNumberOperand(expression.operator, right);
                 return -(double) right;
             case BANG:
                 return !isTruthy(right);
@@ -49,37 +60,37 @@ public class Interpreter implements Expr.Visitor<Object> {
         return null;
     }
 
+    // TODO: Split into two functions, one with all "checkNumberOperands" cases
     @Override
-    public Object visitBinaryExpr(Expr.Binary expr) {
-        Object left = evaluate(expr.left);
-        Object right = evaluate(expr.right);
+    public Object visitBinaryExpression(BinaryExpression expression) {
+        Object left = evaluate(expression.left);
+        Object right = evaluate(expression.right);
 
-
-        switch (expr.operator.type) {
+        switch (expression.operator.type) {
             case GREATER:
-                checkNumberOperands(expr.operator, left, right);
+                checkNumberOperands(expression.operator, left, right);
                 return (double)left > (double)right;
             case GREATER_EQUAL:
-                checkNumberOperands(expr.operator, left, right);
+                checkNumberOperands(expression.operator, left, right);
                 return (double)left >= (double)right;
             case LESS:
-                checkNumberOperands(expr.operator, left, right);
+                checkNumberOperands(expression.operator, left, right);
                 return (double)left < (double)right;
             case LESS_EQUAL:
-                checkNumberOperands(expr.operator, left, right);
+                checkNumberOperands(expression.operator, left, right);
                 return (double)left <= (double)right;
             case BANG_EQUAL:
                 return !isEqual(left, right);
             case EQUAL_EQUAL:
                 return isEqual(left, right);
             case MINUS:
-                checkNumberOperands(expr.operator, left, right);
+                checkNumberOperands(expression.operator, left, right);
                 return (double) left - (double) right;
             case SLASH:
-                checkNumberOperands(expr.operator, left, right);
+                checkNumberOperands(expression.operator, left, right);
                 return (double) left / (double) right;
             case STAR:
-                checkNumberOperands(expr.operator, left, right);
+                checkNumberOperands(expression.operator, left, right);
                 return (double) left * (double) right;
             case PLUS:
                 if (left instanceof Double && right instanceof Double) {
@@ -88,7 +99,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof String && right instanceof String) {
                     return (String) left + (String) right;
                 }
-                throw new RuntimeError(expr.operator,
+                throw new RuntimeError(expression.operator,
                     "Operands must be two numbers or two strings.");
         }
 
@@ -97,10 +108,13 @@ public class Interpreter implements Expr.Visitor<Object> {
 
     private void checkNumberOperands(Token operator, Object left, Object right) {
         if (left instanceof Double && right instanceof Double) return;
+
         throw new RuntimeError(operator, "Operands must be numbers.");
     }
+
     private void checkNumberOperand(Token operator, Object operand) {
         if (operand instanceof Double) return;
+
         throw new RuntimeError(operator, "Operand must be a number.");
     }
 
@@ -111,13 +125,14 @@ public class Interpreter implements Expr.Visitor<Object> {
         return a.equals(b);
     }
 
-    private Object evaluate(Expr expr) {
-        return expr.accept(this);
+    private Object evaluate(AbstractExpression expression) {
+        return expression.accept(this);
     }
 
     private boolean isTruthy(Object object) {
         if (object == null) return false;
         if (object instanceof Boolean) return (boolean)object;
+
         return true;
     }
 }

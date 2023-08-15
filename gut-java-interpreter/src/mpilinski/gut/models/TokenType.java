@@ -1,4 +1,4 @@
-package mpilinski.gut;
+package mpilinski.gut.models;
 
 public enum TokenType {
     // Single-character tokens

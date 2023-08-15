@@ -1,12 +1,12 @@
-package mpilinski.gut;
+package mpilinski.gut.models;
 
 public class Token {
-    final TokenType type;
-    final String lexeme;
-    final Object literal;
-    final int lineNumber;
+    public final TokenType type;
+    public final String lexeme;
+    public final Object literal;
+    public final int lineNumber;
 
-    Token(TokenType type, String lexeme, Object literal, int lineNumber) {
+    public Token(TokenType type, String lexeme, Object literal, int lineNumber) {
         this.type = type;
         this.lexeme = lexeme;
         this.literal = literal;

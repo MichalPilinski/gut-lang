@@ -1,5 +1,13 @@
 package mpilinski.gut;
 
+import mpilinski.gut.abstractions.AbstractExpression;
+import mpilinski.gut.classes.Interpreter;
+import mpilinski.gut.classes.Parser;
+import mpilinski.gut.classes.Scanner;
+import mpilinski.gut.errors.RuntimeError;
+import mpilinski.gut.models.Token;
+import mpilinski.gut.models.TokenType;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -60,7 +68,7 @@ public class Gut {
         List<Token> tokens = scanner.scanTokens();
 
         Parser parser = new Parser(tokens);
-        Expr expression = parser.parse();
+        AbstractExpression expression = parser.parse();
 
         // Stop if there was a syntax error.
         if (hadError) return;
@@ -68,17 +76,17 @@ public class Gut {
         interpreter.interpret(expression);
     }
 
-    static void error(int line, String message) {
+    public static void error(int line, String message) {
         report(line, "", message);
     }
 
-    static void runtimeError(RuntimeError error) {
+    public static void runtimeError(RuntimeError error) {
         System.err.println(error.getMessage() +
                 "\n[line " + error.token.lineNumber + "]");
         hadRuntimeError = true;
     }
 
-    static void error(Token token, String message) {
+    public static void error(Token token, String message) {
         if (token.type == TokenType.EOF) {
             report(token.lineNumber, " at end", message);
         } else {
