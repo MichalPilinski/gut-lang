@@ -15,36 +15,33 @@ public class AstGenerator {
 
         String outputDir = args[0];
 
-        generateAst(outputDir, Arrays.asList(
-                "Binary   : AbstractExpression left, Token operator, AbstractExpression right",
-                "Grouping : AbstractExpression expression",
-                "Literal  : Object value",
-                "Unary    : Token operator, AbstractExpression right"
+        generateAst(outputDir, "Statement", Arrays.asList(
+                "Block      : List<Stmt> statements"
         ));
     }
 
-    private static void generateAst(String outputDir, List<String> types) throws IOException {
-        generateBaseClass(outputDir, types);
+    private static void generateAst(String outputDir, String astType, List<String> types) throws IOException {
+        // generateBaseClass(outputDir, astType, types);
 
         for(String type: types) {
-            generateExpressionType(outputDir, type);
+            generateExpressionType(outputDir, astType, type);
         }
     }
 
-    private static void generateExpressionType(String basePath, String type) throws IOException {
+    private static void generateExpressionType(String basePath, String astType, String type) throws IOException {
         String typeName = type.split(":")[0].trim();
-        String className = typeName + "Expression";
+        String className = typeName + astType;
 
         String path = basePath + "/" + className + ".autogen.java";
         try(PrintWriter writer = new PrintWriter(path, StandardCharsets.UTF_8)) {
-            writer.println("package mpilinski.gut.expressions;");
+            writer.println("package mpilinski.gut." + astType.toLowerCase() + ";");
             writer.println();
 
-            writer.println("import mpilinski.gut.abstractions.AbstractExpression;");
+            writer.println("import mpilinski.gut.abstractions.Abstract" + astType + ";");
             writer.println("import mpilinski.gut.models.Token;");
             writer.println();
 
-            writer.println("public class " + className + " extends  AbstractExpression {");
+            writer.println("public class " + className + " extends  Abstract" + astType + " {");
 
             // Fields
             String[] fields = type.split(":")[1].trim().split(", ");
@@ -82,32 +79,33 @@ public class AstGenerator {
         }
     }
 
-    private static void generateBaseClass(String basePath, List<String> types) throws IOException {
-        String path = basePath + "/AbstractExpression.autogen.java";
+    private static void generateBaseClass(String basePath, String astType, List<String> types) throws IOException {
+        String path = basePath + "/Abstract" + astType + ".autogen.java";
 
         try(PrintWriter writer = new PrintWriter(path, StandardCharsets.UTF_8)) {
             writer.println("package mpilinski.gut.abstractions;");
             writer.println();
 
-            writer.println("import mpilinski.gut.expressions.BinaryExpression;");
-            writer.println("import mpilinski.gut.expressions.GroupingExpression;");
-            writer.println("import mpilinski.gut.expressions.LiteralExpression;");
-            writer.println("import mpilinski.gut.expressions.UnaryExpression;");
+            for(var type : types) {
+                var typeName = type.split(":")[0].trim();
+                writer.println("import mpilinski.gut." + astType.toLowerCase() + "." + typeName + astType + ";");
+            }
+
             writer.println();
 
-            writer.println("public abstract class AbstractExpression {");
+            writer.println("public abstract class Abstract" + astType + " {");
 
-            defineVisitor(writer, types);
+            defineVisitor(writer, astType, types);
         }
 
     }
 
-    private static void defineVisitor(PrintWriter writer, List<String> types) {
+    private static void defineVisitor(PrintWriter writer, String astType, List<String> types) {
         writer.println("  public interface Visitor<R> {");
 
         for (String type : types) {
             String typeName = type.split(":")[0].trim();
-            writer.println("    R visit" + typeName + "Expression(" + typeName + "Expression expr);");
+            writer.println("    R visit" + typeName + astType + "(" + typeName + astType + " " + astType.toLowerCase() + ");");
         }
 
         writer.println("  }");

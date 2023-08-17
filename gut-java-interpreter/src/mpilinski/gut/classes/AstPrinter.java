@@ -1,10 +1,7 @@
 package mpilinski.gut.classes;
 
 import mpilinski.gut.abstractions.AbstractExpression;
-import mpilinski.gut.expressions.BinaryExpression;
-import mpilinski.gut.expressions.GroupingExpression;
-import mpilinski.gut.expressions.LiteralExpression;
-import mpilinski.gut.expressions.UnaryExpression;
+import mpilinski.gut.expressions.*;
 
 public class AstPrinter implements AbstractExpression.Visitor<String> {
     String print(AbstractExpression expression) {
@@ -35,6 +32,16 @@ public class AstPrinter implements AbstractExpression.Visitor<String> {
     @Override
     public String visitUnaryExpression(UnaryExpression expression) {
         return parenthesize(expression.operator.lexeme, expression.right);
+    }
+
+    @Override
+    public String visitVariableExpression(VariableExpression expression) {
+        return null;
+    }
+
+    @Override
+    public String visitAssignExpression(AssignExpression expression) {
+        return null;
     }
 
     private String parenthesize(String name, AbstractExpression... expressions) {

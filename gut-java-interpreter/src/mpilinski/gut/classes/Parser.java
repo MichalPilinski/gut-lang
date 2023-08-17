@@ -2,13 +2,16 @@ package mpilinski.gut.classes;
 
 import mpilinski.gut.Gut;
 import mpilinski.gut.abstractions.AbstractExpression;
-import mpilinski.gut.expressions.BinaryExpression;
-import mpilinski.gut.expressions.GroupingExpression;
-import mpilinski.gut.expressions.LiteralExpression;
-import mpilinski.gut.expressions.UnaryExpression;
+import mpilinski.gut.abstractions.AbstractStatement;
+import mpilinski.gut.expressions.*;
 import mpilinski.gut.models.Token;
 import mpilinski.gut.models.TokenType;
+import mpilinski.gut.statements.BlockStatement;
+import mpilinski.gut.statements.ExpressionStatement;
+import mpilinski.gut.statements.PrintStatement;
+import mpilinski.gut.statements.VarStatement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
@@ -20,16 +23,90 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    public AbstractExpression parse() {
+    public List<AbstractStatement> parse() {
+        List<AbstractStatement> statements = new ArrayList<>();
+        while(!isAtEnd()) {
+            statements.add(declaration());
+        }
+
+        return statements;
+    }
+
+    private AbstractStatement declaration() {
         try {
-            return expression();
+            if (match(TokenType.VAR)) return varDeclaration();
+
+            return statement();
         } catch (ParseError error) {
+            synchronize();
             return null;
         }
     }
 
+    private AbstractStatement varDeclaration() {
+        Token name = consume(TokenType.IDENTIFIER, "Expect variable name.");
+
+        AbstractExpression initializer = null;
+        if (match(TokenType.EQUAL)) {
+            initializer = expression();
+        }
+
+        consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+        return new VarStatement(name, initializer);
+    }
+
+    private AbstractStatement statement() {
+        if(match(TokenType.PRINT)) return printStatement();
+        if(match(TokenType.LEFT_BRACE)) return blockStatement();
+
+        return expressionStatement();
+    }
+
+    private AbstractStatement expressionStatement() {
+        AbstractExpression expr = expression();
+
+        consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+        return new ExpressionStatement(expr);
+    }
+
+    private AbstractStatement printStatement() {
+        AbstractExpression value = expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after value.");
+
+        return new PrintStatement(value);
+    }
+
+    private AbstractStatement blockStatement() {
+        List<AbstractStatement> statements = new ArrayList<>();
+
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return new BlockStatement(statements);
+    }
+
     private AbstractExpression expression() {
-        return equality();
+        return assignment();
+    }
+
+    private AbstractExpression assignment() {
+        AbstractExpression expr = equality();
+
+        if (match(TokenType.EQUAL)) {
+            Token equals = previous();
+            AbstractExpression value = assignment();
+
+            if (expr instanceof VariableExpression) {
+                Token name = ((VariableExpression)expr).name;
+                return new AssignExpression(name, value);
+            }
+
+            throw error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private AbstractExpression equality() {
@@ -109,6 +186,10 @@ public class Parser {
 
         if (match(TokenType.NUMBER, TokenType.STRING)) {
             return new LiteralExpression(previous().literal);
+        }
+
+        if (match(TokenType.IDENTIFIER)) {
+            return new VariableExpression(previous());
         }
 
         if (match(TokenType.LEFT_PARENTHESIS)) {

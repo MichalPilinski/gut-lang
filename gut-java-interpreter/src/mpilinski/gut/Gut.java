@@ -1,6 +1,7 @@
 package mpilinski.gut;
 
 import mpilinski.gut.abstractions.AbstractExpression;
+import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.classes.Interpreter;
 import mpilinski.gut.classes.Parser;
 import mpilinski.gut.classes.Scanner;
@@ -23,9 +24,6 @@ public class Gut {
     static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
-
-        System.out.print("kanapka");
-
         if(args.length > 1) {
             System.out.println("Too much arguments provided!");
             System.out.println("Usage: jgut [script ]");
@@ -68,12 +66,12 @@ public class Gut {
         List<Token> tokens = scanner.scanTokens();
 
         Parser parser = new Parser(tokens);
-        AbstractExpression expression = parser.parse();
+        List<AbstractStatement> statements = parser.parse();
 
         // Stop if there was a syntax error.
         if (hadError) return;
 
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
     }
 
     public static void error(int line, String message) {

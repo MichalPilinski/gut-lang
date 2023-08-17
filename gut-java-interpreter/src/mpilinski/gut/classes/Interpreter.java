@@ -2,20 +2,45 @@ package mpilinski.gut.classes;
 
 import mpilinski.gut.Gut;
 import mpilinski.gut.abstractions.AbstractExpression;
+import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.errors.RuntimeError;
-import mpilinski.gut.expressions.BinaryExpression;
-import mpilinski.gut.expressions.GroupingExpression;
-import mpilinski.gut.expressions.LiteralExpression;
-import mpilinski.gut.expressions.UnaryExpression;
+import mpilinski.gut.expressions.*;
 import mpilinski.gut.models.Token;
+import mpilinski.gut.statements.BlockStatement;
+import mpilinski.gut.statements.ExpressionStatement;
+import mpilinski.gut.statements.PrintStatement;
+import mpilinski.gut.statements.VarStatement;
 
-public class Interpreter implements AbstractExpression.Visitor<Object> {
-    public void interpret(AbstractExpression expression) {
+import java.util.List;
+
+public class Interpreter implements AbstractExpression.Visitor<Object>, AbstractStatement.Visitor<Void> {
+    private Environment environment = new Environment();
+
+    public void interpret(List<AbstractStatement> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (AbstractStatement statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             Gut.runtimeError(error);
+        }
+    }
+
+    private void execute(AbstractStatement statement) {
+        statement.accept(this);
+    }
+
+    void executeBlock(List<AbstractStatement> statements, Environment environment) {
+        Environment previous = this.environment;
+
+        try {
+            this.environment = environment;
+
+            for (AbstractStatement statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
         }
     }
 
@@ -33,6 +58,51 @@ public class Interpreter implements AbstractExpression.Visitor<Object> {
         }
 
         return object.toString();
+    }
+
+
+    @Override
+    public Void visitExpressionStatement(ExpressionStatement statement) {
+        evaluate(statement.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStatement(PrintStatement statement) {
+        Object value = evaluate(statement.expression);
+        System.out.println(stringify(value));
+
+        return null;
+    }
+
+    @Override
+    public  Void visitBlockStatement(BlockStatement statement) {
+        executeBlock(statement.statements, new Environment(environment));
+        return null;
+    }
+
+    @Override
+    public Void visitVarStatement(VarStatement statement) {
+        Object value = null;
+        if (statement.initializer != null) {
+            value = evaluate(statement.initializer);
+        }
+
+        environment.define(statement.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Object visitAssignExpression(AssignExpression expression) {
+        Object value = evaluate(expression.value);
+        environment.assign(expression.name, value);
+
+        return value;
+    }
+
+    @Override
+    public Object visitVariableExpression(VariableExpression expression) {
+        return environment.get(expression.name);
     }
 
     @Override
