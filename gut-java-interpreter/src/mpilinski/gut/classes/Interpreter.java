@@ -6,10 +6,7 @@ import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.errors.RuntimeError;
 import mpilinski.gut.expressions.*;
 import mpilinski.gut.models.Token;
-import mpilinski.gut.statements.BlockStatement;
-import mpilinski.gut.statements.ExpressionStatement;
-import mpilinski.gut.statements.PrintStatement;
-import mpilinski.gut.statements.VarStatement;
+import mpilinski.gut.statements.*;
 
 import java.util.List;
 
@@ -89,6 +86,20 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
         }
 
         environment.define(statement.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Void visitIfStatement(IfStatement statement) {
+        if (isTruthy(evaluate(statement.condition))) {
+            execute(statement.thenBranch);
+            return null;
+        }
+
+        if (statement.elseBranch != null) {
+            execute(statement.elseBranch);
+        }
+
         return null;
     }
 

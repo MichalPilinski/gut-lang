@@ -6,10 +6,7 @@ import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.expressions.*;
 import mpilinski.gut.models.Token;
 import mpilinski.gut.models.TokenType;
-import mpilinski.gut.statements.BlockStatement;
-import mpilinski.gut.statements.ExpressionStatement;
-import mpilinski.gut.statements.PrintStatement;
-import mpilinski.gut.statements.VarStatement;
+import mpilinski.gut.statements.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,10 +53,25 @@ public class Parser {
     }
 
     private AbstractStatement statement() {
+        if(match(TokenType.IF)) return ifStatement();
         if(match(TokenType.PRINT)) return printStatement();
         if(match(TokenType.LEFT_BRACE)) return blockStatement();
 
         return expressionStatement();
+    }
+
+    private AbstractStatement ifStatement() {
+        consume(TokenType.LEFT_PARENTHESIS, "Expect '(' after 'if'.");
+        AbstractExpression condition = expression();
+        consume(TokenType.RIGHT_PARENTHESIS, "Expect ')' after if condition.");
+
+        AbstractStatement thenBranch = statement();
+        AbstractStatement elseBranch = null;
+        if (match(TokenType.ELSE)) {
+            elseBranch = statement();
+        }
+
+        return new IfStatement(condition, thenBranch, elseBranch);
     }
 
     private AbstractStatement expressionStatement() {

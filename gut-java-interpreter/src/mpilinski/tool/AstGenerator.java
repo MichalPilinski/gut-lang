@@ -16,7 +16,7 @@ public class AstGenerator {
         String outputDir = args[0];
 
         generateAst(outputDir, "Statement", Arrays.asList(
-                "Block      : List<Stmt> statements"
+                "If         : Expr condition, Stmt thenBranch, Stmt elseBranch"
         ));
     }
 
