@@ -10,6 +10,7 @@ public abstract class AbstractExpression {
         R visitUnaryExpression(UnaryExpression expr);
         R visitVariableExpression(VariableExpression expression);
         R visitAssignExpression(AssignExpression expression);
+        R visitLogicalExpression(LogicalExpression expression);
     }
 
     public abstract <R> R accept(Visitor<R> visitor);

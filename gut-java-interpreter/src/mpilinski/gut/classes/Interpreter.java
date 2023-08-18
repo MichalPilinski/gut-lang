@@ -6,6 +6,7 @@ import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.errors.RuntimeError;
 import mpilinski.gut.expressions.*;
 import mpilinski.gut.models.Token;
+import mpilinski.gut.models.TokenType;
 import mpilinski.gut.statements.*;
 
 import java.util.List;
@@ -119,6 +120,19 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
     @Override
     public Object visitLiteralExpression(LiteralExpression expression) {
         return expression.value;
+    }
+
+    @Override
+    public Object visitLogicalExpression(LogicalExpression expression) {
+        Object left = evaluate(expression.left);
+
+        if (expression.operator.type == TokenType.OR) {
+            if (isTruthy(left)) return left;
+        } else {
+            if (!isTruthy(left)) return left;
+        }
+
+        return evaluate(expression.right);
     }
 
     @Override

@@ -15,8 +15,8 @@ public class AstGenerator {
 
         String outputDir = args[0];
 
-        generateAst(outputDir, "Statement", Arrays.asList(
-                "If         : Expr condition, Stmt thenBranch, Stmt elseBranch"
+        generateAst(outputDir, "Expression", Arrays.asList(
+            "Logical  : Expr left, Token operator, Expr right"
         ));
     }
 

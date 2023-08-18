@@ -104,7 +104,7 @@ public class Parser {
     }
 
     private AbstractExpression assignment() {
-        AbstractExpression expr = equality();
+        AbstractExpression expr = or();
 
         if (match(TokenType.EQUAL)) {
             Token equals = previous();
@@ -119,6 +119,31 @@ public class Parser {
         }
 
         return expr;
+    }
+
+    private AbstractExpression or() {
+        AbstractExpression expression = and();
+
+        while(match(TokenType.OR)) {
+            Token operator = previous();
+            AbstractExpression right = and();
+
+            expression = new LogicalExpression(expression, operator, right);
+        }
+
+        return expression;
+    }
+
+    private AbstractExpression and() {
+        AbstractExpression expression = equality();
+
+        while(match(TokenType.AND)) {
+            Token operator = previous();
+            AbstractExpression right = and();
+            expression = new LogicalExpression(expression, operator, right);
+        }
+
+        return expression;
     }
 
     private AbstractExpression equality() {
