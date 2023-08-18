@@ -74,6 +74,15 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
     }
 
     @Override
+    public Void visitWhileStatement(WhileStatement statement) {
+        while (isTruthy(evaluate(statement.condition))) {
+            execute(statement.body);
+        }
+
+        return null;
+    }
+
+    @Override
     public  Void visitBlockStatement(BlockStatement statement) {
         executeBlock(statement.statements, new Environment(environment));
         return null;

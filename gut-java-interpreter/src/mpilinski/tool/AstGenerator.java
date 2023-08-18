@@ -15,8 +15,8 @@ public class AstGenerator {
 
         String outputDir = args[0];
 
-        generateAst(outputDir, "Expression", Arrays.asList(
-            "Logical  : Expr left, Token operator, Expr right"
+        generateAst(outputDir, "Statement", Arrays.asList(
+            "While      : Expr condition, Stmt body"
         ));
     }
 

@@ -1,1 +1,6 @@
-print "kanapka" and nil;
+var a = 0;
+
+while (a < 10) {
+    a = a + 1;
+    print "xD";
+}

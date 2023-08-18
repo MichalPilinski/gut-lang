@@ -9,6 +9,7 @@ public abstract class AbstractStatement {
     R visitVarStatement(VarStatement statement);
     R visitBlockStatement(BlockStatement statement);
     R visitIfStatement(IfStatement statement);
+    R visitWhileStatement(WhileStatement statement);
   }
 
   public abstract <R> R accept(AbstractStatement.Visitor<R> visitor);
