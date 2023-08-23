@@ -4,6 +4,7 @@ import mpilinski.gut.abstractions.AbstractExpression;
 import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.classes.Interpreter;
 import mpilinski.gut.classes.Parser;
+import mpilinski.gut.classes.Resolver;
 import mpilinski.gut.classes.Scanner;
 import mpilinski.gut.errors.RuntimeError;
 import mpilinski.gut.models.Token;
@@ -68,7 +69,13 @@ public class Gut {
         Parser parser = new Parser(tokens);
         List<AbstractStatement> statements = parser.parse();
 
-        // Stop if there was a syntax error.
+        // Stop if there was a syntax error
+        if (hadError) return;
+
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
+        // Stop if there was a resolution error
         if (hadError) return;
 
         interpreter.interpret(statements);

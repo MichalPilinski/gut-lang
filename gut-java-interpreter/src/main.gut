@@ -1,15 +1,10 @@
-fun closure() {
-    var i = 0;
-    fun inner() {
-        i = i + 1;
-        return i;
-    }
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
 
-    return inner;
+  showA();
+  var a = "block";
+  showA();
 }
-
-var xD = closure();
-
-print xD();
-print xD();
-print xD();

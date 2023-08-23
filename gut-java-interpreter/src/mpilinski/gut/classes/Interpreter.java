@@ -14,11 +14,15 @@ import mpilinski.gut.models.TokenType;
 import mpilinski.gut.statements.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Interpreter implements AbstractExpression.Visitor<Object>, AbstractStatement.Visitor<Void> {
     public final Environment globals = new Environment();
     private Environment environment = globals;
+
+    private final Map<AbstractExpression, Integer> locals = new HashMap<>();
 
     public Interpreter() {
         registerForeigns();
@@ -40,6 +44,10 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
 
     private void execute(AbstractStatement statement) {
         statement.accept(this);
+    }
+
+    void resolve(AbstractExpression expression, int depth) {
+        locals.put(expression, depth);
     }
 
     public void executeBlock(List<AbstractStatement> statements, Environment environment) {
@@ -71,7 +79,6 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
 
         return object.toString();
     }
-
 
     @Override
     public Void visitExpressionStatement(ExpressionStatement statement) {
@@ -145,14 +152,20 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
     @Override
     public Object visitAssignExpression(AssignExpression expression) {
         Object value = evaluate(expression.value);
-        environment.assign(expression.name, value);
+
+        Integer distance = locals.get(expression);
+        if (distance != null) {
+            environment.assignAt(distance, expression.name, value);
+        } else {
+            globals.assign(expression.name, value);
+        }
 
         return value;
     }
 
     @Override
     public Object visitVariableExpression(VariableExpression expression) {
-        return environment.get(expression.name);
+        return lookUpVariable(expression.name, expression);
     }
 
     @Override
@@ -257,6 +270,15 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
         }
 
         return function.call(this, arguments);
+    }
+
+    private Object lookUpVariable(Token name, AbstractExpression expression) {
+        Integer distance = locals.get(expression);
+        if (distance != null) {
+            return environment.getAt(distance, name.lexeme);
+        } else {
+            return globals.get(name);
+        }
     }
 
     private void checkNumberOperands(Token operator, Object left, Object right) {
