@@ -16,7 +16,7 @@ public class AstGenerator {
         String outputDir = args[0];
 
         generateAst(outputDir, "Statement", Arrays.asList(
-            "While      : Expr condition, Stmt body"
+            "Return     : Token keyword, Expr value"
         ));
     }
 

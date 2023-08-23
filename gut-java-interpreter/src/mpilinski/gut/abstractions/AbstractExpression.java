@@ -11,6 +11,7 @@ public abstract class AbstractExpression {
         R visitVariableExpression(VariableExpression expression);
         R visitAssignExpression(AssignExpression expression);
         R visitLogicalExpression(LogicalExpression expression);
+        R visitCallExpression(CallExpression expression);
     }
 
     public abstract <R> R accept(Visitor<R> visitor);

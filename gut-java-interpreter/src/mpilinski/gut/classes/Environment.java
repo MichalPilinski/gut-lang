@@ -14,7 +14,7 @@ public class Environment {
         enclosing = null;
     }
 
-    Environment(Environment enclosing) {
+    public Environment(Environment enclosing) {
         this.enclosing = enclosing;
     }
 

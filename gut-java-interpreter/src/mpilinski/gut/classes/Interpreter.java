@@ -3,16 +3,30 @@ package mpilinski.gut.classes;
 import mpilinski.gut.Gut;
 import mpilinski.gut.abstractions.AbstractExpression;
 import mpilinski.gut.abstractions.AbstractStatement;
+import mpilinski.gut.abstractions.GutCallable;
+import mpilinski.gut.models.GutFunction;
+import mpilinski.gut.errors.ReturnException;
 import mpilinski.gut.errors.RuntimeError;
 import mpilinski.gut.expressions.*;
+import mpilinski.gut.foreign.ClockForeign;
 import mpilinski.gut.models.Token;
 import mpilinski.gut.models.TokenType;
 import mpilinski.gut.statements.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Interpreter implements AbstractExpression.Visitor<Object>, AbstractStatement.Visitor<Void> {
-    private Environment environment = new Environment();
+    public final Environment globals = new Environment();
+    private Environment environment = globals;
+
+    public Interpreter() {
+        registerForeigns();
+    }
+
+    private void registerForeigns() {
+        globals.define("clock", new ClockForeign());
+    }
 
     public void interpret(List<AbstractStatement> statements) {
         try {
@@ -28,7 +42,7 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
         statement.accept(this);
     }
 
-    void executeBlock(List<AbstractStatement> statements, Environment environment) {
+    public void executeBlock(List<AbstractStatement> statements, Environment environment) {
         Environment previous = this.environment;
 
         try {
@@ -80,6 +94,21 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
         }
 
         return null;
+    }
+
+    @Override
+    public Void visitFunctionStatement(FunctionStatement statement) {
+        GutFunction function = new GutFunction(statement, environment);
+        environment.define(statement.name.lexeme, function);
+        return null;
+    }
+
+    @Override
+    public Void visitReturnStatement(ReturnStatement statement) {
+        Object value = null;
+        if(statement.value != null) value = evaluate(statement.value);
+
+        throw new ReturnException(value);
     }
 
     @Override
@@ -208,6 +237,26 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
         }
 
         return null;
+    }
+
+    @Override
+    public Object visitCallExpression(CallExpression expression) {
+        Object callee = evaluate(expression.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (AbstractExpression argument : expression.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        if(!(callee instanceof GutCallable function)) {
+            throw new RuntimeError(expression.paren, "Can only call functions and classes.");
+        }
+
+        if(arguments.size() != function.arity()) {
+            throw new RuntimeError(expression.paren, "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+        }
+
+        return function.call(this, arguments);
     }
 
     private void checkNumberOperands(Token operator, Object left, Object right) {
