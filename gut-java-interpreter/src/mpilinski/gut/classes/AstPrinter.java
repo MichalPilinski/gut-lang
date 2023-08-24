@@ -54,6 +54,21 @@ public class AstPrinter implements AbstractExpression.Visitor<String> {
         return null;
     }
 
+    @Override
+    public String visitGetExpression(GetExpression expression) {
+        return null;
+    }
+
+    @Override
+    public String visitSetExpression(SetExpression expression) {
+        return null;
+    }
+
+    @Override
+    public String visitThisExpression(ThisExpression expression) {
+        return null;
+    }
+
     private String parenthesize(String name, AbstractExpression... expressions) {
         StringBuilder builder = new StringBuilder();
 

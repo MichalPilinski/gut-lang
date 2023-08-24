@@ -1,10 +1,10 @@
-var a = "global";
-{
-  fun showA() {
-    print a;
-  }
+class Foo {
+  printThis(uSure) {
+    if(!uSure) return;
 
-  showA();
-  var a = "block";
-  showA();
+    print this;
+  }
 }
+
+var foo = Foo();
+foo.printThis(false);

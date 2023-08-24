@@ -12,6 +12,7 @@ public abstract class AbstractStatement {
     R visitWhileStatement(WhileStatement statement);
     R visitFunctionStatement(FunctionStatement statement);
     R visitReturnStatement(ReturnStatement statement);
+    R visitClassStatement(ClassStatement statement);
   }
 
   public abstract <R> R accept(AbstractStatement.Visitor<R> visitor);

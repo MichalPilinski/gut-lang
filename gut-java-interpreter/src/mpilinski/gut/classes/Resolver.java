@@ -4,6 +4,7 @@ import mpilinski.gut.Gut;
 import mpilinski.gut.abstractions.AbstractExpression;
 import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.expressions.*;
+import mpilinski.gut.models.ClassType;
 import mpilinski.gut.models.FunctionType;
 import mpilinski.gut.models.Token;
 import mpilinski.gut.statements.*;
@@ -16,7 +17,10 @@ import java.util.Stack;
 public class Resolver implements AbstractExpression.Visitor<Void>, AbstractStatement.Visitor<Void> {
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+//> kanapka
+//<
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currentClass = ClassType.NONE;
 
     public Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
@@ -84,9 +88,39 @@ public class Resolver implements AbstractExpression.Visitor<Void>, AbstractState
         }
 
         if (statement.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Gut.error(statement.keyword, "Can't return a value from an initializer.");
+            }
+
             resolve(statement.value);
         }
 
+        return null;
+    }
+
+    @Override
+    public Void visitClassStatement(ClassStatement statement) {
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+
+        declare(statement.name);
+        define(statement.name);
+
+        beginScope();
+        scopes.peek().put("this", true);
+
+        for (FunctionStatement method : statement.methods) {
+            FunctionType declaration = FunctionType.METHOD;
+            if (method.name.lexeme.equals("init")) {
+                declaration = FunctionType.INITIALIZER;
+            }
+
+            resolveFunction(method, declaration);
+        }
+
+        endScope();
+
+        currentClass = enclosingClass;
         return null;
     }
 
@@ -133,6 +167,31 @@ public class Resolver implements AbstractExpression.Visitor<Void>, AbstractState
             resolve(argument);
         }
 
+        return null;
+    }
+
+    @Override
+    public Void visitGetExpression(GetExpression expression) {
+        resolve(expression.object);
+        return null;
+    }
+
+    @Override
+    public Void visitSetExpression(SetExpression expression) {
+        resolve(expression.value);
+        resolve(expression.object);
+        return null;
+    }
+
+    @Override
+    public Void visitThisExpression(ThisExpression expression) {
+        if (currentClass == ClassType.NONE) {
+            Gut.error(expression.keyword, "Can't use 'this' outside of a class.");
+
+            return null;
+        }
+
+        resolveLocal(expression, expression.keyword);
         return null;
     }
 

@@ -32,6 +32,7 @@ public class Parser {
 
     private AbstractStatement declaration() {
         try {
+            if(match(TokenType.CLASS)) return classDeclaration();
             if(match(TokenType.FUN)) return functionDeclaration("function");
             if (match(TokenType.VAR)) return varDeclaration();
 
@@ -42,7 +43,22 @@ public class Parser {
         }
     }
 
-    private AbstractStatement functionDeclaration(String kind) {
+    private AbstractStatement classDeclaration() {
+        Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
+        consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
+
+        List<FunctionStatement> methods = new ArrayList<>();
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(functionDeclaration("method"));
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new ClassStatement(name, methods);
+    }
+
+
+    private FunctionStatement functionDeclaration(String kind) {
         Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
 
         consume(TokenType.LEFT_PARENTHESIS, "Expect '(' after " + kind + " name.");
@@ -203,6 +219,9 @@ public class Parser {
             if (expr instanceof VariableExpression) {
                 Token name = ((VariableExpression)expr).name;
                 return new AssignExpression(name, value);
+            } else if (expr instanceof GetExpression) {
+                GetExpression get = (GetExpression)expr;
+                return new SetExpression(get.object, get.name, value);
             }
 
             throw error(equals, "Invalid assignment target.");
@@ -312,6 +331,9 @@ public class Parser {
         while (true) {
             if (match(TokenType.LEFT_PARENTHESIS)) {
                 expression = finishCall(expression);
+            } else if (match(TokenType.DOT)) {
+                Token name = consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+                expression = new GetExpression(expression, name);
             } else {
                 break;
             }
@@ -343,6 +365,8 @@ public class Parser {
         if (match(TokenType.NUMBER, TokenType.STRING)) {
             return new LiteralExpression(previous().literal);
         }
+
+        if (match(TokenType.THIS)) return new ThisExpression(previous());
 
         if (match(TokenType.IDENTIFIER)) {
             return new VariableExpression(previous());

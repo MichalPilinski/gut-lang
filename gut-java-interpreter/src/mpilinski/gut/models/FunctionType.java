@@ -2,5 +2,7 @@ package mpilinski.gut.models;
 
 public enum FunctionType {
     NONE,
-    FUNCTION
+    FUNCTION,
+    METHOD,
+    INITIALIZER
 }

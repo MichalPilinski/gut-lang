@@ -4,13 +4,11 @@ import mpilinski.gut.Gut;
 import mpilinski.gut.abstractions.AbstractExpression;
 import mpilinski.gut.abstractions.AbstractStatement;
 import mpilinski.gut.abstractions.GutCallable;
-import mpilinski.gut.models.GutFunction;
+import mpilinski.gut.models.*;
 import mpilinski.gut.errors.ReturnException;
 import mpilinski.gut.errors.RuntimeError;
 import mpilinski.gut.expressions.*;
 import mpilinski.gut.foreign.ClockForeign;
-import mpilinski.gut.models.Token;
-import mpilinski.gut.models.TokenType;
 import mpilinski.gut.statements.*;
 
 import java.util.ArrayList;
@@ -105,7 +103,7 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
 
     @Override
     public Void visitFunctionStatement(FunctionStatement statement) {
-        GutFunction function = new GutFunction(statement, environment);
+        GutFunction function = new GutFunction(statement, environment, false);
         environment.define(statement.name.lexeme, function);
         return null;
     }
@@ -116,6 +114,22 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
         if(statement.value != null) value = evaluate(statement.value);
 
         throw new ReturnException(value);
+    }
+
+    @Override
+    public Void visitClassStatement(ClassStatement statement) {
+        environment.define(statement.name.lexeme, null);
+
+        Map<String, GutFunction> methods = new HashMap<>();
+        for (FunctionStatement method : statement.methods) {
+            GutFunction function = new GutFunction(method, environment, method.name.lexeme.equals("init"));
+            methods.put(method.name.lexeme, function);
+        }
+
+        GutClass klass = new GutClass(statement.name.lexeme, methods);
+        environment.assign(statement.name, klass);
+
+        return null;
     }
 
     @Override
@@ -270,6 +284,35 @@ public class Interpreter implements AbstractExpression.Visitor<Object>, Abstract
         }
 
         return function.call(this, arguments);
+    }
+
+    @Override
+    public Object visitGetExpression(GetExpression expression) {
+        Object object = evaluate(expression.object);
+        if (object instanceof GutInstance) {
+            return ((GutInstance) object).get(expression.name);
+        }
+
+        throw new RuntimeError(expression.name, "Only instances have properties.");
+    }
+
+    @Override
+    public Object visitSetExpression(SetExpression expression) {
+        Object object = evaluate(expression.object);
+
+        if (!(object instanceof GutInstance)) {
+            throw new RuntimeError(expression.name, "Only instances have fields.");
+        }
+
+        Object value = evaluate(expression.value);
+        ((GutInstance)object).set(expression.name, value);
+
+        return value;
+    }
+
+    @Override
+    public Object visitThisExpression(ThisExpression expression) {
+        return lookUpVariable(expression.keyword, expression);
     }
 
     private Object lookUpVariable(Token name, AbstractExpression expression) {

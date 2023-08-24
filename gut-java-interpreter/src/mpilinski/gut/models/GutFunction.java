@@ -11,9 +11,12 @@ public class GutFunction implements GutCallable {
     private final FunctionStatement declaration;
     private final Environment closure;
 
-    public GutFunction(FunctionStatement declaration, Environment closure) {
+    private final boolean isInitializer;
+
+    public GutFunction(FunctionStatement declaration, Environment closure, boolean isInitializer) {
         this.declaration = declaration;
         this.closure = closure;
+        this.isInitializer = isInitializer;
     }
 
     @Override
@@ -31,10 +34,20 @@ public class GutFunction implements GutCallable {
         try{
             interpreter.executeBlock(declaration.body, environment);
         } catch (ReturnException returnValue) {
+            if (isInitializer) return closure.getAt(0, "this");
+
             return returnValue.value;
         }
 
+        if (isInitializer) return closure.getAt(0, "this");
         return null;
+    }
+
+    public GutFunction bind(GutInstance instance) {
+        Environment environment = new Environment(closure);
+        environment.define("this", instance);
+
+        return new GutFunction(declaration, environment, isInitializer);
     }
 
     @Override
